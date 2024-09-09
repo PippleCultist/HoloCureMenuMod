@@ -4,7 +4,7 @@
 using namespace Aurie;
 using namespace YYTK;
 
-#define VERSION_NUM "v1.0.0"
+#define VERSION_NUM "v1.0.1"
 #define MODNAME "Holocure Menu Mod " VERSION_NUM
 
 #define SOME_ENUM(DO) \
