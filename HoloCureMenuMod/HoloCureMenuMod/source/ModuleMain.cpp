@@ -5,6 +5,7 @@
 #include "HoloCureMenuInterface.h"
 #include "CodeEvents.h"
 #include "ScriptFunctions.h"
+#include "BuiltinFunctions.h"
 using namespace Aurie;
 using namespace YYTK;
 
@@ -27,6 +28,8 @@ CInstance* globalInstance = nullptr;
 int objInputManagerIndex = -1;
 int objTitleScreenIndex = -1;
 int sprHudInitButtonsIndex = -1;
+int sprHudScrollArrows2 = -1;
+int sprHudOptionButton = -1;
 int jpFont = -1;
 int rmCharSelect = -1;
 
@@ -77,6 +80,16 @@ EXPORTED AurieStatus ModuleInitialize(
 		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "struct_set_from_hash");
 		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
 	}
+	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterBuiltinFunctionCallback(MODNAME, "draw_text", DrawTextBefore, nullptr, nullptr)))
+	{
+		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "draw_text");
+		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
+	}
+	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterBuiltinFunctionCallback(MODNAME, "show_debug_message", ShowDebugMessageBefore, nullptr, nullptr)))
+	{
+		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "show_debug_message");
+		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
+	}
 
 	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterCodeEventCallback(MODNAME, "gml_Object_obj_InputManager_Step_0", InputManagerStepAfter, nullptr)))
 	{
@@ -111,6 +124,8 @@ EXPORTED AurieStatus ModuleInitialize(
 	objTitleScreenIndex = static_cast<int>(g_ModuleInterface->CallBuiltin("asset_get_index", { "obj_TitleScreen" }).AsReal());
 	objInputManagerIndex = static_cast<int>(g_ModuleInterface->CallBuiltin("asset_get_index", { "obj_InputManager" }).AsReal());
 	sprHudInitButtonsIndex = static_cast<int>(g_ModuleInterface->CallBuiltin("asset_get_index", { "hud_initButtons" }).AsReal());
+	sprHudScrollArrows2 = static_cast<int>(g_ModuleInterface->CallBuiltin("asset_get_index", { "hud_scrollArrows2" }).AsReal());
+	sprHudOptionButton = static_cast<int>(g_ModuleInterface->CallBuiltin("asset_get_index", { "hud_OptionButton" }).AsReal());
 	jpFont = static_cast<int>(g_ModuleInterface->CallBuiltin("asset_get_index", { "jpFont" }).AsReal());
 	rmCharSelect = static_cast<int>(g_ModuleInterface->CallBuiltin("asset_get_index", { "rm_CharSelect" }).AsReal());
 

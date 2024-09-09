@@ -64,6 +64,23 @@ AurieStatus HoloCureMenuInterface::CreateMenuGrid(
 	return AURIE_SUCCESS;
 }
 
+AurieStatus HoloCureMenuInterface::DeleteMenuGrid(
+	IN const std::string& ModName,
+	IN std::shared_ptr<menuGridData>& menuGridPtr
+)
+{
+	for (int i = 0; i < modMenuGridList.size(); i++)
+	{
+		if (modMenuGridList[i].get() == menuGridPtr.get())
+		{
+			modMenuGridList.erase(modMenuGridList.begin() + i);
+			modMenuGridNames.erase(modMenuGridNames.begin() + i);
+			break;
+		}
+	}
+	return AURIE_SUCCESS;
+}
+
 AurieStatus HoloCureMenuInterface::CreateMenuColumn(
 	IN const std::string& ModName,
 	IN std::shared_ptr<menuGridData>& menuGridPtr,
@@ -123,9 +140,12 @@ AurieStatus HoloCureMenuInterface::SwapToMenuGrid(
 			RValue setKeyboardControlsArray = g_ModuleInterface->CallBuiltin("array_create", { 0 });
 			g_ModuleInterface->CallBuiltin("method_call", { setKeyboardControlsMethod, setKeyboardControlsArray });
 		}
-		
 	}
 	curMenuGrid = menuGridPtr;
+	if (curMenuGrid != nullptr && curMenuGrid->onEnterFunc)
+	{
+		curMenuGrid->onEnterFunc();
+	}
 	return AURIE_SUCCESS;
 }
 
@@ -231,6 +251,16 @@ void menuGridData::processInput(bool isMouseLeftPressed, bool isMouseRightPresse
 		// Left
 		if (curClickedField == nullptr)
 		{
+			auto& menuDataPtr = curMenuColumnPtr->menuDataPtrList[curMenuColumnPtr->curSelectedIndex];
+			if (menuDataPtr->menuDataType == MENUDATATYPE_Selection)
+			{
+				menuDataPtr->curSelectionTextIndex--;
+				if (menuDataPtr->curSelectionTextIndex < 0)
+				{
+					menuDataPtr->curSelectionTextIndex = static_cast<int>(menuDataPtr->selectionText.size()) - 1;
+				}
+				return;
+			}
 			int nextColumnIndex = getMaxVisibleMenuColumnIndex(curSelectedColumnIndex);
 			if (nextColumnIndex != -1)
 			{
@@ -261,6 +291,16 @@ void menuGridData::processInput(bool isMouseLeftPressed, bool isMouseRightPresse
 		// Right
 		if (curClickedField == nullptr)
 		{
+			auto& menuDataPtr = curMenuColumnPtr->menuDataPtrList[curMenuColumnPtr->curSelectedIndex];
+			if (menuDataPtr->menuDataType == MENUDATATYPE_Selection)
+			{
+				menuDataPtr->curSelectionTextIndex++;
+				if (menuDataPtr->curSelectionTextIndex >= menuDataPtr->selectionText.size())
+				{
+					menuDataPtr->curSelectionTextIndex = 0;
+				}
+				return;
+			}
 			int nextColumnIndex = getMinVisibleMenuColumnIndex(curSelectedColumnIndex);
 			if (nextColumnIndex != -1)
 			{
@@ -502,15 +542,15 @@ void menuGridData::draw(CInstance* Self)
 					{
 						curMenuDataPtr->curFrameCount = 0;
 						curMenuDataPtr->curSubImageIndex++;
-						if (curMenuDataPtr->curSubImageIndex >= curMenuDataPtr->curSpriteList.size())
+						if (curMenuDataPtr->curSubImageIndex >= curMenuDataPtr->curSprite->numFrames)
 						{
 							curMenuDataPtr->curSubImageIndex = 0;
 						}
 					}
 				}
-				if (curMenuDataPtr->curSpriteList[curMenuDataPtr->curSubImageIndex] != nullptr)
+				if (curMenuDataPtr->curSprite != nullptr)
 				{
-					g_ModuleInterface->CallBuiltin("draw_sprite", { curMenuDataPtr->curSpriteList[curMenuDataPtr->curSubImageIndex]->spriteRValue, curMenuDataPtr->curSubImageIndex, curMenuDataPtr->xPos, curMenuDataPtr->yPos });
+					g_ModuleInterface->CallBuiltin("draw_sprite", { curMenuDataPtr->curSprite->spriteRValue, curMenuDataPtr->curSubImageIndex, curMenuDataPtr->xPos, curMenuDataPtr->yPos });
 				}
 			}
 			else if (curMenuDataPtr->menuDataType == MENUDATATYPE_Text)
@@ -521,6 +561,24 @@ void menuGridData::draw(CInstance* Self)
 				}
 				g_ModuleInterface->CallBuiltin("draw_set_halign", { fa_left });
 				g_ModuleInterface->CallBuiltin("draw_text", { curMenuDataPtr->xPos, curMenuDataPtr->yPos, curMenuDataPtr->labelName });
+			}
+			else if (curMenuDataPtr->menuDataType == MENUDATATYPE_Selection)
+			{
+				offsetX += 90;
+				auto curTextColor = textColor[isOptionSelected];
+				g_ModuleInterface->CallBuiltin("draw_set_halign", { fa_left });
+				g_ModuleInterface->CallBuiltin("draw_sprite_ext", { sprHudOptionButton, isOptionSelected, curMenuDataPtr->xPos + offsetX, curMenuDataPtr->yPos, 1, 1, 0, static_cast<double>(0xFFFFFF), 1 });
+				g_ModuleInterface->CallBuiltin("draw_text_color", { curMenuDataPtr->xPos + offsetX - 78, curMenuDataPtr->yPos + 8, curMenuDataPtr->labelName, curTextColor, curTextColor, curTextColor, curTextColor, 1 });
+				if (isOptionSelected)
+				{
+					g_ModuleInterface->CallBuiltin("draw_sprite_ext", { sprHudScrollArrows2, 0, curMenuDataPtr->xPos + offsetX + 40 - 38, curMenuDataPtr->yPos + 13, 1, 1, 0, static_cast<double>(0xFFFFFF), 1 });
+					g_ModuleInterface->CallBuiltin("draw_sprite_ext", { sprHudScrollArrows2, 1, curMenuDataPtr->xPos + offsetX + 40 + 38, curMenuDataPtr->yPos + 13, 1, 1, 0, static_cast<double>(0xFFFFFF), 1 });
+				}
+				if (curMenuDataPtr->curSelectionTextIndex >= 0 && curMenuDataPtr->curSelectionTextIndex < curMenuDataPtr->selectionText.size())
+				{
+					g_ModuleInterface->CallBuiltin("draw_set_halign", { fa_center });
+					g_ModuleInterface->CallBuiltin("draw_text_color", { curMenuDataPtr->xPos + offsetX + 40, curMenuDataPtr->yPos + 8, curMenuDataPtr->selectionText[curMenuDataPtr->curSelectionTextIndex], curTextColor, curTextColor, curTextColor, curTextColor, 1 });
+				}
 			}
 		}
 	}

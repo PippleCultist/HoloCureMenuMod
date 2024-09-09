@@ -44,5 +44,7 @@ extern PFUNC_YYGMLScript origMouseOverButtonScript;
 extern int objInputManagerIndex;
 extern int objTitleScreenIndex;
 extern int sprHudInitButtonsIndex;
+extern int sprHudScrollArrows2;
+extern int sprHudOptionButton;
 extern int jpFont;
 extern int rmCharSelect;

@@ -142,6 +142,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="include\YYToolkit\Shared.cpp" />
+    <ClCompile Include="source\BuiltinFunctions.cpp" />
     <ClCompile Include="source\CodeEvents.cpp" />
     <ClCompile Include="source\HoloCureMenuInterface.cpp" />
     <ClCompile Include="source\ModuleMain.cpp" />
@@ -152,6 +153,7 @@
     <ClInclude Include="include\CallbackManager\CallbackManagerInterface.h" />
     <ClInclude Include="include\FunctionWrapper\FunctionWrapper.hpp" />
     <ClInclude Include="include\YYToolkit\Shared.hpp" />
+    <ClInclude Include="source\BuiltinFunctions.h" />
     <ClInclude Include="source\CodeEvents.h" />
     <ClInclude Include="source\CommonFunctions.h" />
     <ClInclude Include="source\HoloCureMenuInterface.h" />
