@@ -67,16 +67,16 @@ void nextButton()
 std::shared_ptr<menuGridData> modMenuGrid = std::shared_ptr<menuGridData>(
 	new menuGridData({
 		std::shared_ptr<menuColumnData>(new menuColumnData({
-			std::shared_ptr<menuData>(new menuData(60, 20 + 29 * 0, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr, MENUDATATYPE_Button)),
-			std::shared_ptr<menuData>(new menuData(60, 20 + 29 * 1, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr, MENUDATATYPE_Button)),
-			std::shared_ptr<menuData>(new menuData(60, 20 + 29 * 2, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr, MENUDATATYPE_Button)),
-			std::shared_ptr<menuData>(new menuData(60, 20 + 29 * 3, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr, MENUDATATYPE_Button)),
-			std::shared_ptr<menuData>(new menuData(60, 20 + 29 * 4, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr, MENUDATATYPE_Button)),
-			std::shared_ptr<menuData>(new menuData(60, 20 + 29 * 5, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr, MENUDATATYPE_Button)),
-			std::shared_ptr<menuData>(new menuData(60, 20 + 29 * 6, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr, MENUDATATYPE_Button)),
-			std::shared_ptr<menuData>(new menuData(60, 20 + 29 * 7, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr, MENUDATATYPE_Button)),
-			std::shared_ptr<menuData>(new menuData(60, 20 + 29 * 8, 180, 20, "TITLEMENU_PrevButton", "Prev", true, prevButton, nullptr, MENUDATATYPE_Button)),
-			std::shared_ptr<menuData>(new menuData(60, 20 + 29 * 9, 180, 20, "TITLEMENU_NextButton", "Next", true, nextButton, nullptr, MENUDATATYPE_Button)),
+			std::shared_ptr<menuData>(new menuDataButton(60, 20 + 29 * 0, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr)),
+			std::shared_ptr<menuData>(new menuDataButton(60, 20 + 29 * 1, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr)),
+			std::shared_ptr<menuData>(new menuDataButton(60, 20 + 29 * 2, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr)),
+			std::shared_ptr<menuData>(new menuDataButton(60, 20 + 29 * 3, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr)),
+			std::shared_ptr<menuData>(new menuDataButton(60, 20 + 29 * 4, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr)),
+			std::shared_ptr<menuData>(new menuDataButton(60, 20 + 29 * 5, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr)),
+			std::shared_ptr<menuData>(new menuDataButton(60, 20 + 29 * 6, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr)),
+			std::shared_ptr<menuData>(new menuDataButton(60, 20 + 29 * 7, 180, 20, "TITLEMENU_MenuGridButton", "", false, clickButton, nullptr)),
+			std::shared_ptr<menuData>(new menuDataButton(60, 20 + 29 * 8, 180, 20, "TITLEMENU_PrevButton", "Prev", true, prevButton, nullptr)),
+			std::shared_ptr<menuData>(new menuDataButton(60, 20 + 29 * 9, 180, 20, "TITLEMENU_NextButton", "Next", true, nextButton, nullptr)),
 		}, 0)
 		)
 	}, 0, nullptr)

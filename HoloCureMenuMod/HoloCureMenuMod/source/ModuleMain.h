@@ -4,7 +4,7 @@
 using namespace Aurie;
 using namespace YYTK;
 
-#define VERSION_NUM "v1.0.1"
+#define VERSION_NUM "v1.0.2"
 #define MODNAME "Holocure Menu Mod " VERSION_NUM
 
 #define SOME_ENUM(DO) \
@@ -39,7 +39,7 @@ extern YYRunnerInterface g_RunnerInterface;
 
 extern TRoutine origStructGetFromHashFunc;
 extern TRoutine origStructSetFromHashFunc;
-extern PFUNC_YYGMLScript origMouseOverButtonScript;
+extern PFUNC_YYGMLScript origDrawTextOutlineScript;
 
 extern int objInputManagerIndex;
 extern int objTitleScreenIndex;

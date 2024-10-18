@@ -21,6 +21,8 @@ CallbackManagerInterface* callbackManagerInterfacePtr = nullptr;
 YYTKInterface* g_ModuleInterface = nullptr;
 YYRunnerInterface g_RunnerInterface;
 
+PFUNC_YYGMLScript origDrawTextOutlineScript = nullptr;
+
 HoloCureMenuInterface holoCureMenuInterface;
 
 CInstance* globalInstance = nullptr;
@@ -115,6 +117,11 @@ EXPORTED AurieStatus ModuleInitialize(
 	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterScriptFunctionCallback(MODNAME, "gml_Script_Confirmed_gml_Object_obj_TitleScreen_Create_0", ConfirmedTitleScreenBefore, nullptr, nullptr)))
 	{
 		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "gml_Script_Confirmed_gml_Object_obj_TitleScreen_Create_0");
+		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
+	}
+	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterScriptFunctionCallback(MODNAME, "gml_Script_draw_text_outline", nullptr, nullptr, &origDrawTextOutlineScript)))
+	{
+		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "gml_Script_draw_text_outline");
 		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
 	}
 

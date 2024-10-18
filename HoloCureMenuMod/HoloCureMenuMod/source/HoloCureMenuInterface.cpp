@@ -107,39 +107,23 @@ AurieStatus HoloCureMenuInterface::SwapToMenuGrid(
 	IN std::shared_ptr<menuGridData>& menuGridPtr
 )
 {
+	RValue titleScreen = g_ModuleInterface->CallBuiltin("instance_find", { objTitleScreenIndex, 0 });
 	if (menuGridPtr == nullptr)
 	{
 		curMenuID = "";
-		RValue titleScreen = g_ModuleInterface->CallBuiltin("instance_find", { objTitleScreenIndex, 0 });
 		setInstanceVariable(titleScreen, GML_canControl, RValue(true));
-	}
-	if (menuGridPtr == nullptr || menuGridPtr == modMenuGrid)
-	{
-		if (prevActionOneKey != -1)
-		{
-			g_ModuleInterface->CallBuiltin("variable_global_get", { "theButtons" })[0] = static_cast<double>(prevActionOneKey);
-			prevActionOneKey = -1;
-			g_ModuleInterface->CallBuiltin("variable_global_get", { "theButtons" })[1] = static_cast<double>(prevActionTwoKey);
-			prevActionTwoKey = -1;
-			RValue setKeyboardControlsMethod = g_ModuleInterface->CallBuiltin("variable_global_get", { "SetKeyboardControls" });
-			RValue setKeyboardControlsArray = g_ModuleInterface->CallBuiltin("array_create", { 0 });
-			g_ModuleInterface->CallBuiltin("method_call", { setKeyboardControlsMethod, setKeyboardControlsArray });
-		}
 	}
 	else
 	{
-		if (prevActionOneKey == -1)
-		{
-			RValue& actionOneKey = g_ModuleInterface->CallBuiltin("variable_global_get", { "theButtons" })[0];
-			prevActionOneKey = static_cast<int>(lround(actionOneKey.m_Real));
-			actionOneKey = -1;
-			RValue& actionTwoKey = g_ModuleInterface->CallBuiltin("variable_global_get", { "theButtons" })[1];
-			prevActionTwoKey = static_cast<int>(lround(actionTwoKey.m_Real));
-			actionTwoKey = -1;
-			RValue setKeyboardControlsMethod = g_ModuleInterface->CallBuiltin("variable_global_get", { "SetKeyboardControls" });
-			RValue setKeyboardControlsArray = g_ModuleInterface->CallBuiltin("array_create", { 0 });
-			g_ModuleInterface->CallBuiltin("method_call", { setKeyboardControlsMethod, setKeyboardControlsArray });
-		}
+		setInstanceVariable(titleScreen, GML_canControl, RValue(false));
+	}
+	if (menuGridPtr == nullptr || menuGridPtr == modMenuGrid)
+	{
+		EnableActionButtons(ModName);
+	}
+	else
+	{
+		DisableActionButtons(ModName);
 	}
 	curMenuGrid = menuGridPtr;
 	if (curMenuGrid != nullptr && curMenuGrid->onEnterFunc)
@@ -167,12 +151,59 @@ AurieStatus HoloCureMenuInterface::GetCurrentMenuGrid(
 	return AURIE_SUCCESS;
 }
 
+AurieStatus HoloCureMenuInterface::DisableActionButtons(
+	IN const std::string& ModName
+)
+{
+	if (prevActionOneKey == -1)
+	{
+		RValue& actionOneKey = g_ModuleInterface->CallBuiltin("variable_global_get", { "theButtons" })[0];
+		prevActionOneKey = static_cast<int>(lround(actionOneKey.m_Real));
+		actionOneKey = -1;
+		RValue& actionTwoKey = g_ModuleInterface->CallBuiltin("variable_global_get", { "theButtons" })[1];
+		prevActionTwoKey = static_cast<int>(lround(actionTwoKey.m_Real));
+		actionTwoKey = -1;
+		RValue setKeyboardControlsMethod = g_ModuleInterface->CallBuiltin("variable_global_get", { "SetKeyboardControls" });
+		RValue setKeyboardControlsArray = g_ModuleInterface->CallBuiltin("array_create", { 0 });
+		g_ModuleInterface->CallBuiltin("method_call", { setKeyboardControlsMethod, setKeyboardControlsArray });
+	}
+}
+
+AurieStatus HoloCureMenuInterface::EnableActionButtons(
+	IN const std::string& ModName
+)
+{
+	if (prevActionOneKey != -1)
+	{
+		g_ModuleInterface->CallBuiltin("variable_global_get", { "theButtons" })[0] = static_cast<double>(prevActionOneKey);
+		prevActionOneKey = -1;
+		g_ModuleInterface->CallBuiltin("variable_global_get", { "theButtons" })[1] = static_cast<double>(prevActionTwoKey);
+		prevActionTwoKey = -1;
+		RValue setKeyboardControlsMethod = g_ModuleInterface->CallBuiltin("variable_global_get", { "SetKeyboardControls" });
+		RValue setKeyboardControlsArray = g_ModuleInterface->CallBuiltin("array_create", { 0 });
+		g_ModuleInterface->CallBuiltin("method_call", { setKeyboardControlsMethod, setKeyboardControlsArray });
+	}
+}
+
 void clickField()
 {
 	cursorTimer = 0;
 	auto& curColumnPtr = curMenuGrid->menuColumnsPtrList[curMenuGrid->curSelectedColumnIndex];
 	curClickedField = curColumnPtr->menuDataPtrList[curColumnPtr->curSelectedIndex];
-	RValue keyboardString = curClickedField->textField;
+	RValue keyboardString;
+	if (curClickedField->menuDataType == MENUDATATYPE_NumberField)
+	{
+		keyboardString = static_cast<menuDataNumberField*>(curClickedField.get())->textField;
+	}
+	else if (curClickedField->menuDataType == MENUDATATYPE_TextBoxField)
+	{
+		keyboardString = static_cast<menuDataTextBoxField*>(curClickedField.get())->textField;
+	}
+	else
+	{
+		keyboardString = "";
+		callbackManagerInterfacePtr->LogToFile(MODNAME, "Invalid click type for HoloCureMenuMod");
+	}
 	g_ModuleInterface->SetBuiltin("keyboard_string", nullptr, NULL_INDEX, keyboardString);
 }
 
@@ -181,23 +212,57 @@ void unclickField()
 	curClickedField = nullptr;
 }
 
+bool clickedMenuFunc(std::shared_ptr<menuData> menuDataPtr)
+{
+	menuFunc funcPtr = nullptr;
+	switch (menuDataPtr->menuDataType)
+	{
+		case MENUDATATYPE_Button:
+		{
+			funcPtr = static_cast<menuDataButton*>(menuDataPtr.get())->clickMenuFunc;
+			break;
+		}
+		case MENUDATATYPE_NumberField:
+		{
+			funcPtr = static_cast<menuDataNumberField*>(menuDataPtr.get())->clickMenuFunc;
+			break;
+		}
+		case MENUDATATYPE_TextBoxField:
+		{
+			funcPtr = static_cast<menuDataTextBoxField*>(menuDataPtr.get())->clickMenuFunc;
+			break;
+		}
+		case MENUDATATYPE_Selection:
+		{
+			funcPtr = static_cast<menuDataSelection*>(menuDataPtr.get())->clickMenuFunc;
+			break;
+		}
+	}
+	if (funcPtr != nullptr)
+	{
+		funcPtr();
+		return true;
+	}
+	return false;
+}
+
 void menuGridData::processInput(bool isMouseLeftPressed, bool isMouseRightPressed, bool isActionOnePressed, bool isActionTwoPressed, bool isEnterPressed, bool isEscPressed,
 	bool isMoveUpPressed, bool isMoveDownPressed, bool isMoveLeftPressed, bool isMoveRightPressed)
 {
-	auto curMenuColumnPtr = menuColumnsPtrList[curSelectedColumnIndex];
+	std::shared_ptr<menuColumnData> curMenuColumnPtr = nullptr;
+	if (curSelectedColumnIndex < menuColumnsPtrList.size())
+	{
+		curMenuColumnPtr = menuColumnsPtrList[curSelectedColumnIndex];
+	}
+
 	if (isMouseLeftPressed || isActionOnePressed || isEnterPressed)
 	{
 		// Confirm
 		unclickField();
-		if (!curMenuID.empty())
+		if (!curMenuID.empty() && curMenuColumnPtr != nullptr)
 		{
 			auto& menuDataPtr = curMenuColumnPtr->menuDataPtrList[curMenuColumnPtr->curSelectedIndex];
-			auto funcPtr = menuDataPtr->clickMenuFunc;
-			if (funcPtr != nullptr)
-			{
-				funcPtr();
-			}
-			else if (menuDataPtr->menuDataType == MENUDATATYPE_NumberField || menuDataPtr->menuDataType == MENUDATATYPE_TextBoxField)
+			if (!clickedMenuFunc(menuDataPtr) && menuDataPtr->menuDataType == MENUDATATYPE_NumberField || menuDataPtr->menuDataType == MENUDATATYPE_TextBoxField)
 			{
 				clickField();
 			}
@@ -206,6 +271,10 @@ void menuGridData::processInput(bool isMouseLeftPressed, bool isMouseRightPresse
 	else if (isMouseRightPressed || isActionTwoPressed || isEscPressed)
 	{
 		// Return
+		if (curMenuGrid->onReturnFunc)
+		{
+			curMenuGrid->onReturnFunc();
+		}
 		if (curClickedField == nullptr)
 		{
 			if (prevMenu == nullptr)
@@ -223,7 +292,7 @@ void menuGridData::processInput(bool isMouseLeftPressed, bool isMouseRightPresse
 	else if (isMoveUpPressed)
 	{
 		// Up
-		if (curClickedField == nullptr)
+		if (curClickedField == nullptr && curMenuColumnPtr != nullptr)
 		{
 			int nextMenuDataIndex = curMenuColumnPtr->getMaxVisibleMenuDataIndex(curMenuColumnPtr->curSelectedIndex);
 			if (nextMenuDataIndex != -1)
@@ -236,7 +305,7 @@ void menuGridData::processInput(bool isMouseLeftPressed, bool isMouseRightPresse
 	else if (isMoveDownPressed)
 	{
 		// Down
-		if (curClickedField == nullptr)
+		if (curClickedField == nullptr && curMenuColumnPtr != nullptr)
 		{
 			int nextMenuDataIndex = curMenuColumnPtr->getMinVisibleMenuDataIndex(curMenuColumnPtr->curSelectedIndex);
 			if (nextMenuDataIndex != -1)
@@ -249,15 +318,21 @@ void menuGridData::processInput(bool isMouseLeftPressed, bool isMouseRightPresse
 	else if (isMoveLeftPressed)
 	{
 		// Left
-		if (curClickedField == nullptr)
+		if (curClickedField == nullptr && curMenuColumnPtr != nullptr)
 		{
 			auto& menuDataPtr = curMenuColumnPtr->menuDataPtrList[curMenuColumnPtr->curSelectedIndex];
 			if (menuDataPtr->menuDataType == MENUDATATYPE_Selection)
 			{
-				menuDataPtr->curSelectionTextIndex--;
-				if (menuDataPtr->curSelectionTextIndex < 0)
+				menuDataSelection* curMenuDataSelection = static_cast<menuDataSelection*>(menuDataPtr.get());
+				curMenuDataSelection->curSelectionTextIndex--;
+				if (curMenuDataSelection->curSelectionTextIndex < 0)
 				{
-					menuDataPtr->curSelectionTextIndex = static_cast<int>(menuDataPtr->selectionText.size()) - 1;
+					curMenuDataSelection->curSelectionTextIndex = static_cast<int>(curMenuDataSelection->selectionText.size()) - 1;
+				}
+				auto funcPtr = curMenuDataSelection->clickMenuFunc;
+				if (funcPtr != nullptr)
+				{
+					funcPtr();
 				}
 				return;
 			}
@@ -289,15 +364,21 @@ void menuGridData::processInput(bool isMouseLeftPressed, bool isMouseRightPresse
 	else if (isMoveRightPressed)
 	{
 		// Right
-		if (curClickedField == nullptr)
+		if (curClickedField == nullptr && curMenuColumnPtr != nullptr)
 		{
 			auto& menuDataPtr = curMenuColumnPtr->menuDataPtrList[curMenuColumnPtr->curSelectedIndex];
 			if (menuDataPtr->menuDataType == MENUDATATYPE_Selection)
 			{
-				menuDataPtr->curSelectionTextIndex++;
-				if (menuDataPtr->curSelectionTextIndex >= menuDataPtr->selectionText.size())
+				menuDataSelection* curMenuDataSelection = static_cast<menuDataSelection*>(menuDataPtr.get());
+				curMenuDataSelection->curSelectionTextIndex++;
+				if (curMenuDataSelection->curSelectionTextIndex >= curMenuDataSelection->selectionText.size())
 				{
-					menuDataPtr->curSelectionTextIndex = 0;
+					curMenuDataSelection->curSelectionTextIndex = 0;
+				}
+				auto funcPtr = curMenuDataSelection->clickMenuFunc;
+				if (funcPtr != nullptr)
+				{
+					funcPtr();
 				}
 				return;
 			}
@@ -456,6 +537,10 @@ void menuGridData::draw(CInstance* Self)
 	curMenuID = "";
 	double textColor[2]{ 0xFFFFFF, 0 };
 	RValue inputManager = g_ModuleInterface->CallBuiltin("instance_find", { objInputManagerIndex, 0 });
+	if (drawFunc != nullptr)
+	{
+		drawFunc();
+	}
 	for (int i = 0; i < menuColumnsPtrList.size(); i++)
 	{
 		auto& curMenuColumnPtr = menuColumnsPtrList[i];
@@ -476,8 +561,8 @@ void menuGridData::draw(CInstance* Self)
 			RValue mouseY;
 			g_ModuleInterface->GetBuiltin("mouse_x", nullptr, NULL_INDEX, mouseX);
 			g_ModuleInterface->GetBuiltin("mouse_y", nullptr, NULL_INDEX, mouseY);
-			if (mouseX.m_Real >= curMenuDataPtr->xPos + offsetX && mouseX.m_Real <= curMenuDataPtr->xPos + offsetX + curMenuDataPtr->width
-				&& mouseY.m_Real >= curMenuDataPtr->yPos && mouseY.m_Real <= curMenuDataPtr->yPos + curMenuDataPtr->height)
+			if (mouseX.m_Real >= curMenuDataPtr->xPos + offsetX && mouseX.m_Real < curMenuDataPtr->xPos + offsetX + curMenuDataPtr->width
+				&& mouseY.m_Real >= curMenuDataPtr->yPos && mouseY.m_Real < curMenuDataPtr->yPos + curMenuDataPtr->height)
 			{
 				curMenuID = curMenuDataPtr->menuID;
 				curSelectedColumnIndex = i;
@@ -510,15 +595,33 @@ void menuGridData::draw(CInstance* Self)
 					auto lineColor = textColor[1 - cursorTimer / 60];
 					splitWrappingText(textList, std::string(keyboardString.AsString()), curMenuDataPtr->width);
 
-					if (textList.size() <= curMenuDataPtr->height / 20)
+					if (curMenuDataPtr->menuDataType == MENUDATATYPE_TextBoxField)
 					{
-						curClickedField->textField = keyboardString.AsString();
+						auto curTextBoxField = static_cast<menuDataTextBoxField*>(curMenuDataPtr.get());
+						if (textList.size() <= curMenuDataPtr->height / 20)
+						{
+							curTextBoxField->textField = keyboardString.AsString();
+						}
+						else
+						{
+							keyboardString = curTextBoxField->textField;
+							g_ModuleInterface->SetBuiltin("keyboard_string", nullptr, NULL_INDEX, keyboardString);
+							textList.pop_back();
+						}
 					}
 					else
 					{
-						keyboardString = curClickedField->textField;
-						g_ModuleInterface->SetBuiltin("keyboard_string", nullptr, NULL_INDEX, keyboardString);
-						textList.pop_back();
+						auto curNumberField = static_cast<menuDataNumberField*>(curMenuDataPtr.get());
+						if (textList.size() <= curMenuDataPtr->height / 20)
+						{
+							curNumberField->textField = keyboardString.AsString();
+						}
+						else
+						{
+							keyboardString = curNumberField->textField;
+							g_ModuleInterface->SetBuiltin("keyboard_string", nullptr, NULL_INDEX, keyboardString);
+							textList.pop_back();
+						}
 					}
 					int cursorOffsetX = static_cast<int>(lround(g_ModuleInterface->CallBuiltin("string_width", { textList[textList.size() - 1] }).m_Real));
 					int cursorOffsetY = (static_cast<int>(textList.size()) - 1) * 20;
@@ -526,7 +629,14 @@ void menuGridData::draw(CInstance* Self)
 				}
 				else
 				{
-					splitWrappingText(textList, curMenuDataPtr->textField, curMenuDataPtr->width);
+					if (curMenuDataPtr->menuDataType == MENUDATATYPE_TextBoxField)
+					{
+						splitWrappingText(textList, static_cast<menuDataTextBoxField*>(curMenuDataPtr.get())->textField, curMenuDataPtr->width);
+					}
+					else
+					{
+						splitWrappingText(textList, static_cast<menuDataNumberField*>(curMenuDataPtr.get())->textField, curMenuDataPtr->width);
+					}
 				}
 				for (int i = 0; i < textList.size(); i++)
 				{
@@ -535,35 +645,38 @@ void menuGridData::draw(CInstance* Self)
 			}
 			else if (curMenuDataPtr->menuDataType == MENUDATATYPE_Image)
 			{
-				if (curMenuDataPtr->curFrameCount != -1)
+				auto curImage = static_cast<menuDataImageField*>(curMenuDataPtr.get());
+				if (curImage->curFrameCount != -1)
 				{
-					curMenuDataPtr->curFrameCount++;
-					if (curMenuDataPtr->curFrameCount >= 60 / curMenuDataPtr->fps)
+					curImage->curFrameCount++;
+					if (curImage->curFrameCount >= 60 / curImage->fps)
 					{
-						curMenuDataPtr->curFrameCount = 0;
-						curMenuDataPtr->curSubImageIndex++;
-						if (curMenuDataPtr->curSubImageIndex >= curMenuDataPtr->curSprite->numFrames)
+						curImage->curFrameCount = 0;
+						curImage->curSubImageIndex++;
+						if (curImage->curSubImageIndex >= curImage->curSprite->numFrames)
 						{
-							curMenuDataPtr->curSubImageIndex = 0;
+							curImage->curSubImageIndex = 0;
 						}
 					}
 				}
-				if (curMenuDataPtr->curSprite != nullptr)
+				if (curImage->curSprite != nullptr)
 				{
-					g_ModuleInterface->CallBuiltin("draw_sprite", { curMenuDataPtr->curSprite->spriteRValue, curMenuDataPtr->curSubImageIndex, curMenuDataPtr->xPos, curMenuDataPtr->yPos });
+					g_ModuleInterface->CallBuiltin("draw_sprite", { curImage->curSprite->spriteRValue, curImage->curSubImageIndex, curImage->xPos, curImage->yPos });
 				}
 			}
 			else if (curMenuDataPtr->menuDataType == MENUDATATYPE_Text)
 			{
-				if (curMenuDataPtr->labelNameFunc != nullptr)
+				auto curText = static_cast<menuDataText*>(curMenuDataPtr.get());
+				if (curText->labelNameFunc != nullptr)
 				{
-					curMenuDataPtr->labelNameFunc();
+					curText->labelNameFunc();
 				}
 				g_ModuleInterface->CallBuiltin("draw_set_halign", { fa_left });
 				g_ModuleInterface->CallBuiltin("draw_text", { curMenuDataPtr->xPos, curMenuDataPtr->yPos, curMenuDataPtr->labelName });
 			}
 			else if (curMenuDataPtr->menuDataType == MENUDATATYPE_Selection)
 			{
+				auto curSelection = static_cast<menuDataSelection*>(curMenuDataPtr.get());
 				offsetX += 90;
 				auto curTextColor = textColor[isOptionSelected];
 				g_ModuleInterface->CallBuiltin("draw_set_halign", { fa_left });
@@ -574,11 +687,34 @@ void menuGridData::draw(CInstance* Self)
 					g_ModuleInterface->CallBuiltin("draw_sprite_ext", { sprHudScrollArrows2, 0, curMenuDataPtr->xPos + offsetX + 40 - 38, curMenuDataPtr->yPos + 13, 1, 1, 0, static_cast<double>(0xFFFFFF), 1 });
 					g_ModuleInterface->CallBuiltin("draw_sprite_ext", { sprHudScrollArrows2, 1, curMenuDataPtr->xPos + offsetX + 40 + 38, curMenuDataPtr->yPos + 13, 1, 1, 0, static_cast<double>(0xFFFFFF), 1 });
 				}
-				if (curMenuDataPtr->curSelectionTextIndex >= 0 && curMenuDataPtr->curSelectionTextIndex < curMenuDataPtr->selectionText.size())
+				if (curSelection->curSelectionTextIndex >= 0 && curSelection->curSelectionTextIndex < curSelection->selectionText.size())
 				{
 					g_ModuleInterface->CallBuiltin("draw_set_halign", { fa_center });
-					g_ModuleInterface->CallBuiltin("draw_text_color", { curMenuDataPtr->xPos + offsetX + 40, curMenuDataPtr->yPos + 8, curMenuDataPtr->selectionText[curMenuDataPtr->curSelectionTextIndex], curTextColor, curTextColor, curTextColor, curTextColor, 1 });
+					g_ModuleInterface->CallBuiltin("draw_text_color", { curMenuDataPtr->xPos + offsetX + 40, curMenuDataPtr->yPos + 8, curSelection->selectionText[curSelection->curSelectionTextIndex], curTextColor, curTextColor, curTextColor, curTextColor, 1 });
 				}
+			}
+			else if (curMenuDataPtr->menuDataType == MENUDATATYPE_TextOutline)
+			{
+				auto curTextOutline = static_cast<menuDataTextOutline*>(curMenuDataPtr.get());
+				if (curTextOutline->labelNameFunc != nullptr)
+				{
+					curTextOutline->labelNameFunc();
+				}
+				RValue** args = new RValue*[10];
+				args[0] = new RValue(curTextOutline->xPos);
+				args[1] = new RValue(curTextOutline->yPos);
+				args[2] = new RValue(curTextOutline->labelName);
+				args[3] = new RValue(curTextOutline->outlineWidth);
+				args[4] = new RValue(curTextOutline->outlineColor);
+				args[5] = new RValue(curTextOutline->numOutline);
+				args[6] = new RValue(curTextOutline->linePixelSeparation);
+				args[7] = new RValue(curTextOutline->pixelsBeforeLineBreak);
+				args[8] = new RValue(curTextOutline->textColor);
+				args[9] = new RValue(curTextOutline->alpha);
+				g_ModuleInterface->CallBuiltin("draw_set_font", { jpFont });
+				g_ModuleInterface->CallBuiltin("draw_set_halign", { 1 });
+				RValue returnVal;
+				origDrawTextOutlineScript(Self, nullptr, returnVal, 10, args);
 			}
 		}
 	}
