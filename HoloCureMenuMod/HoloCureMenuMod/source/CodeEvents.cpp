@@ -128,5 +128,5 @@ void TitleCharacterDrawBefore(std::tuple<CInstance*, CInstance*, CCode*, int, RV
 void TextControllerCreateAfter(std::tuple<CInstance*, CInstance*, CCode*, int, RValue*>& Args)
 {
 	RValue textContainer = g_ModuleInterface->CallBuiltin("variable_global_get", { "TextContainer" });
-	textContainer["titleButtons"]["eng"][0] = "Play Modded";
+	textContainer["titleButtons"]["eng"][3] = "Play Modded";
 }
