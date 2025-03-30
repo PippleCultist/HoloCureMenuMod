@@ -1,6 +1,6 @@
 #include "HoloCureMenuInterface.h"
 #include "ModuleMain.h"
-#include "YYToolkit/shared.hpp"
+#include "YYToolkit/YYTK_Shared.hpp"
 #include "CallbackManager/CallbackManagerInterface.h"
 #include "CommonFunctions.h"
 
@@ -158,15 +158,16 @@ AurieStatus HoloCureMenuInterface::DisableActionButtons(
 	if (prevActionOneKey == -1)
 	{
 		RValue& actionOneKey = g_ModuleInterface->CallBuiltin("variable_global_get", { "theButtons" })[0];
-		prevActionOneKey = static_cast<int>(lround(actionOneKey.m_Real));
+		prevActionOneKey = static_cast<int>(lround(actionOneKey.ToDouble()));
 		actionOneKey = -1;
 		RValue& actionTwoKey = g_ModuleInterface->CallBuiltin("variable_global_get", { "theButtons" })[1];
-		prevActionTwoKey = static_cast<int>(lround(actionTwoKey.m_Real));
+		prevActionTwoKey = static_cast<int>(lround(actionTwoKey.ToDouble()));
 		actionTwoKey = -1;
 		RValue setKeyboardControlsMethod = g_ModuleInterface->CallBuiltin("variable_global_get", { "SetKeyboardControls" });
 		RValue setKeyboardControlsArray = g_ModuleInterface->CallBuiltin("array_create", { 0 });
 		g_ModuleInterface->CallBuiltin("method_call", { setKeyboardControlsMethod, setKeyboardControlsArray });
 	}
+	return AURIE_SUCCESS;
 }
 
 AurieStatus HoloCureMenuInterface::EnableActionButtons(
@@ -183,6 +184,7 @@ AurieStatus HoloCureMenuInterface::EnableActionButtons(
 		RValue setKeyboardControlsArray = g_ModuleInterface->CallBuiltin("array_create", { 0 });
 		g_ModuleInterface->CallBuiltin("method_call", { setKeyboardControlsMethod, setKeyboardControlsArray });
 	}
+	return AURIE_SUCCESS;
 }
 
 void clickField()
@@ -193,11 +195,11 @@ void clickField()
 	RValue keyboardString;
 	if (curClickedField->menuDataType == MENUDATATYPE_NumberField)
 	{
-		keyboardString = static_cast<menuDataNumberField*>(curClickedField.get())->textField;
+		keyboardString = static_cast<menuDataNumberField*>(curClickedField.get())->textField.c_str();
 	}
 	else if (curClickedField->menuDataType == MENUDATATYPE_TextBoxField)
 	{
-		keyboardString = static_cast<menuDataTextBoxField*>(curClickedField.get())->textField;
+		keyboardString = static_cast<menuDataTextBoxField*>(curClickedField.get())->textField.c_str();
 	}
 	else
 	{
@@ -498,7 +500,7 @@ void splitWrappingText(std::vector<std::string>& textList, std::string drawStr, 
 		textList.push_back("");
 		return;
 	}
-	double drawnTextSize = g_ModuleInterface->CallBuiltin("string_width", { drawStr }).m_Real;
+	double drawnTextSize = g_ModuleInterface->CallBuiltin("string_width", { drawStr.c_str()}).ToDouble();
 	while (drawnTextSize >= sizeOfLineWrap)
 	{
 		int low = 1;
@@ -508,7 +510,7 @@ void splitWrappingText(std::vector<std::string>& textList, std::string drawStr, 
 		{
 			int mid = (high + low) / 2;
 			numCharDrawn = mid;
-			double curDrawnTextSize = g_ModuleInterface->CallBuiltin("string_width", { drawStr.substr(0, numCharDrawn) }).m_Real;
+			double curDrawnTextSize = g_ModuleInterface->CallBuiltin("string_width", { drawStr.substr(0, numCharDrawn).c_str() }).ToDouble();
 			if (curDrawnTextSize == sizeOfLineWrap)
 			{
 				break;
@@ -524,7 +526,7 @@ void splitWrappingText(std::vector<std::string>& textList, std::string drawStr, 
 		}
 		textList.push_back(drawStr.substr(0, numCharDrawn));
 		drawStr = drawStr.substr(numCharDrawn);
-		drawnTextSize = g_ModuleInterface->CallBuiltin("string_width", { drawStr }).m_Real;
+		drawnTextSize = g_ModuleInterface->CallBuiltin("string_width", { drawStr.c_str() }).ToDouble();
 	}
 	if (drawnTextSize != 0)
 	{
@@ -561,8 +563,8 @@ void menuGridData::draw(CInstance* Self)
 			RValue mouseY;
 			g_ModuleInterface->GetBuiltin("mouse_x", nullptr, NULL_INDEX, mouseX);
 			g_ModuleInterface->GetBuiltin("mouse_y", nullptr, NULL_INDEX, mouseY);
-			if (mouseX.m_Real >= curMenuDataPtr->xPos + offsetX && mouseX.m_Real < curMenuDataPtr->xPos + offsetX + curMenuDataPtr->width
-				&& mouseY.m_Real >= curMenuDataPtr->yPos && mouseY.m_Real < curMenuDataPtr->yPos + curMenuDataPtr->height)
+			if (mouseX.ToDouble() >= curMenuDataPtr->xPos + offsetX && mouseX.ToDouble() < curMenuDataPtr->xPos + offsetX + curMenuDataPtr->width
+				&& mouseY.ToDouble() >= curMenuDataPtr->yPos && mouseY.ToDouble() < curMenuDataPtr->yPos + curMenuDataPtr->height)
 			{
 				curMenuID = curMenuDataPtr->menuID;
 				curSelectedColumnIndex = i;
@@ -576,14 +578,14 @@ void menuGridData::draw(CInstance* Self)
 				auto curTextColor = textColor[isOptionSelected];
 				g_ModuleInterface->CallBuiltin("draw_set_halign", { fa_center });
 				g_ModuleInterface->CallBuiltin("draw_sprite_ext", { sprHudInitButtonsIndex, isOptionSelected, curMenuDataPtr->xPos + offsetX, curMenuDataPtr->yPos, 1, 1, 0, static_cast<double>(0xFFFFFF), 1 });
-				g_ModuleInterface->CallBuiltin("draw_text_color", { curMenuDataPtr->xPos + offsetX, curMenuDataPtr->yPos + 9, curMenuDataPtr->labelName, curTextColor, curTextColor, curTextColor, curTextColor, 1 });
+				g_ModuleInterface->CallBuiltin("draw_text_color", { curMenuDataPtr->xPos + offsetX, curMenuDataPtr->yPos + 9, curMenuDataPtr->labelName.c_str(), curTextColor, curTextColor, curTextColor, curTextColor, 1});
 			}
 			else if (curMenuDataPtr->menuDataType == MENUDATATYPE_TextBoxField || curMenuDataPtr->menuDataType == MENUDATATYPE_NumberField)
 			{
 				auto curTextColor = textColor[1];
 				g_ModuleInterface->CallBuiltin("draw_set_halign", { fa_right });
 				g_ModuleInterface->CallBuiltin("draw_set_color", { curTextColor });
-				g_ModuleInterface->CallBuiltin("draw_text", { curMenuDataPtr->xPos + offsetX, curMenuDataPtr->yPos + 9, curMenuDataPtr->labelName });
+				g_ModuleInterface->CallBuiltin("draw_text", { curMenuDataPtr->xPos + offsetX, curMenuDataPtr->yPos + 9, curMenuDataPtr->labelName.c_str() });
 				g_ModuleInterface->CallBuiltin("draw_set_halign", { fa_left });
 				g_ModuleInterface->CallBuiltin("draw_rectangle_color", { curMenuDataPtr->xPos + offsetX, curMenuDataPtr->yPos, curMenuDataPtr->xPos + offsetX + curMenuDataPtr->width, curMenuDataPtr->yPos + curMenuDataPtr->height, textColor[0], textColor[0], textColor[0], textColor[0], false });
 				std::vector<std::string> textList;
@@ -593,18 +595,18 @@ void menuGridData::draw(CInstance* Self)
 					g_ModuleInterface->GetBuiltin("keyboard_string", nullptr, NULL_INDEX, keyboardString);
 					cursorTimer = (cursorTimer + 1) % 120;
 					auto lineColor = textColor[1 - cursorTimer / 60];
-					splitWrappingText(textList, std::string(keyboardString.AsString()), curMenuDataPtr->width);
+					splitWrappingText(textList, keyboardString.ToString(), curMenuDataPtr->width);
 
 					if (curMenuDataPtr->menuDataType == MENUDATATYPE_TextBoxField)
 					{
 						auto curTextBoxField = static_cast<menuDataTextBoxField*>(curMenuDataPtr.get());
 						if (textList.size() <= curMenuDataPtr->height / 20)
 						{
-							curTextBoxField->textField = keyboardString.AsString();
+							curTextBoxField->textField = keyboardString.ToString();
 						}
 						else
 						{
-							keyboardString = curTextBoxField->textField;
+							keyboardString = curTextBoxField->textField.c_str();
 							g_ModuleInterface->SetBuiltin("keyboard_string", nullptr, NULL_INDEX, keyboardString);
 							textList.pop_back();
 						}
@@ -614,16 +616,16 @@ void menuGridData::draw(CInstance* Self)
 						auto curNumberField = static_cast<menuDataNumberField*>(curMenuDataPtr.get());
 						if (textList.size() <= curMenuDataPtr->height / 20)
 						{
-							curNumberField->textField = keyboardString.AsString();
+							curNumberField->textField = keyboardString.ToString();
 						}
 						else
 						{
-							keyboardString = curNumberField->textField;
+							keyboardString = curNumberField->textField.c_str();
 							g_ModuleInterface->SetBuiltin("keyboard_string", nullptr, NULL_INDEX, keyboardString);
 							textList.pop_back();
 						}
 					}
-					int cursorOffsetX = static_cast<int>(lround(g_ModuleInterface->CallBuiltin("string_width", { textList[textList.size() - 1] }).m_Real));
+					int cursorOffsetX = static_cast<int>(lround(g_ModuleInterface->CallBuiltin("string_width", { textList[textList.size() - 1].c_str() }).ToDouble()));
 					int cursorOffsetY = (static_cast<int>(textList.size()) - 1) * 20;
 					g_ModuleInterface->CallBuiltin("draw_line_width_colour", { curMenuDataPtr->xPos + offsetX + cursorOffsetX, curMenuDataPtr->yPos + cursorOffsetY + 2, curMenuDataPtr->xPos + offsetX + cursorOffsetX, curMenuDataPtr->yPos + cursorOffsetY + 12, 1, lineColor, lineColor });
 				}
@@ -640,7 +642,7 @@ void menuGridData::draw(CInstance* Self)
 				}
 				for (int i = 0; i < textList.size(); i++)
 				{
-					g_ModuleInterface->CallBuiltin("draw_text", { curMenuDataPtr->xPos, curMenuDataPtr->yPos + i * 20 + 2, textList[i] });
+					g_ModuleInterface->CallBuiltin("draw_text", { curMenuDataPtr->xPos, curMenuDataPtr->yPos + i * 20 + 2, textList[i].c_str() });
 				}
 			}
 			else if (curMenuDataPtr->menuDataType == MENUDATATYPE_Image)
@@ -672,7 +674,7 @@ void menuGridData::draw(CInstance* Self)
 					curText->labelNameFunc();
 				}
 				g_ModuleInterface->CallBuiltin("draw_set_halign", { fa_left });
-				g_ModuleInterface->CallBuiltin("draw_text", { curMenuDataPtr->xPos, curMenuDataPtr->yPos, curMenuDataPtr->labelName });
+				g_ModuleInterface->CallBuiltin("draw_text", { curMenuDataPtr->xPos, curMenuDataPtr->yPos, curMenuDataPtr->labelName.c_str() });
 			}
 			else if (curMenuDataPtr->menuDataType == MENUDATATYPE_Selection)
 			{
@@ -681,7 +683,7 @@ void menuGridData::draw(CInstance* Self)
 				auto curTextColor = textColor[isOptionSelected];
 				g_ModuleInterface->CallBuiltin("draw_set_halign", { fa_left });
 				g_ModuleInterface->CallBuiltin("draw_sprite_ext", { sprHudOptionButton, isOptionSelected, curMenuDataPtr->xPos + offsetX, curMenuDataPtr->yPos, 1, 1, 0, static_cast<double>(0xFFFFFF), 1 });
-				g_ModuleInterface->CallBuiltin("draw_text_color", { curMenuDataPtr->xPos + offsetX - 78, curMenuDataPtr->yPos + 8, curMenuDataPtr->labelName, curTextColor, curTextColor, curTextColor, curTextColor, 1 });
+				g_ModuleInterface->CallBuiltin("draw_text_color", { curMenuDataPtr->xPos + offsetX - 78, curMenuDataPtr->yPos + 8, curMenuDataPtr->labelName.c_str(), curTextColor, curTextColor, curTextColor, curTextColor, 1});
 				if (isOptionSelected)
 				{
 					g_ModuleInterface->CallBuiltin("draw_sprite_ext", { sprHudScrollArrows2, 0, curMenuDataPtr->xPos + offsetX + 40 - 38, curMenuDataPtr->yPos + 13, 1, 1, 0, static_cast<double>(0xFFFFFF), 1 });
@@ -690,7 +692,7 @@ void menuGridData::draw(CInstance* Self)
 				if (curSelection->curSelectionTextIndex >= 0 && curSelection->curSelectionTextIndex < curSelection->selectionText.size())
 				{
 					g_ModuleInterface->CallBuiltin("draw_set_halign", { fa_center });
-					g_ModuleInterface->CallBuiltin("draw_text_color", { curMenuDataPtr->xPos + offsetX + 40, curMenuDataPtr->yPos + 8, curSelection->selectionText[curSelection->curSelectionTextIndex], curTextColor, curTextColor, curTextColor, curTextColor, 1 });
+					g_ModuleInterface->CallBuiltin("draw_text_color", { curMenuDataPtr->xPos + offsetX + 40, curMenuDataPtr->yPos + 8, curSelection->selectionText[curSelection->curSelectionTextIndex].c_str(), curTextColor, curTextColor, curTextColor, curTextColor, 1});
 				}
 			}
 			else if (curMenuDataPtr->menuDataType == MENUDATATYPE_TextOutline)

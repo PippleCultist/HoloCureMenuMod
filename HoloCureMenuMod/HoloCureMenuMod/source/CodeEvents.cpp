@@ -94,16 +94,16 @@ void InputManagerStepAfter(std::tuple<CInstance*, CInstance*, CCode*, int, RValu
 	if (curMenuGrid != nullptr)
 	{
 		curMenuGrid->processInput(
-			g_ModuleInterface->CallBuiltin("mouse_check_button_pressed", { 1 }).AsBool(),
-			g_ModuleInterface->CallBuiltin("mouse_check_button_pressed", { 2 }).AsBool(),
-			getInstanceVariable(Self, GML_actionOnePressed).AsBool(),
-			getInstanceVariable(Self, GML_actionTwoPressed).AsBool(),
-			getInstanceVariable(Self, GML_enterPressed).AsBool(),
-			getInstanceVariable(Self, GML_escPressed).AsBool(),
-			getInstanceVariable(Self, GML_moveUpPressed).AsBool(),
-			getInstanceVariable(Self, GML_moveDownPressed).AsBool(),
-			getInstanceVariable(Self, GML_moveLeftPressed).AsBool(),
-			getInstanceVariable(Self, GML_moveRightPressed).AsBool()
+			g_ModuleInterface->CallBuiltin("mouse_check_button_pressed", { 1 }).ToBoolean(),
+			g_ModuleInterface->CallBuiltin("mouse_check_button_pressed", { 2 }).ToBoolean(),
+			getInstanceVariable(Self, GML_actionOnePressed).ToBoolean(),
+			getInstanceVariable(Self, GML_actionTwoPressed).ToBoolean(),
+			getInstanceVariable(Self, GML_enterPressed).ToBoolean(),
+			getInstanceVariable(Self, GML_escPressed).ToBoolean(),
+			getInstanceVariable(Self, GML_moveUpPressed).ToBoolean(),
+			getInstanceVariable(Self, GML_moveDownPressed).ToBoolean(),
+			getInstanceVariable(Self, GML_moveLeftPressed).ToBoolean(),
+			getInstanceVariable(Self, GML_moveRightPressed).ToBoolean()
 		);
 	}
 }

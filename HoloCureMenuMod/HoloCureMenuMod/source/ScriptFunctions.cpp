@@ -11,7 +11,7 @@ RValue& ConfirmedTitleScreenBefore(CInstance* Self, CInstance* Other, RValue& Re
 {
 	if (curMenuGrid == nullptr)
 	{
-		int currentOption = static_cast<int>(lround(getInstanceVariable(Self, GML_currentOption).AsReal()));
+		int currentOption = static_cast<int>(lround(getInstanceVariable(Self, GML_currentOption).ToDouble()));
 		if (currentOption == 3)
 		{
 			setInstanceVariable(Self, GML_canControl, RValue(false));

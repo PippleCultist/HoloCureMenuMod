@@ -1,10 +1,10 @@
 #pragma once
 #include <Aurie/shared.hpp>
-#include <YYToolkit/Shared.hpp>
+#include <YYToolkit/YYTK_Shared.hpp>
 using namespace Aurie;
 using namespace YYTK;
 
-#define VERSION_NUM "v1.0.3"
+#define VERSION_NUM "v1.0.4"
 #define MODNAME "Holocure Menu Mod " VERSION_NUM
 
 #define SOME_ENUM(DO) \
