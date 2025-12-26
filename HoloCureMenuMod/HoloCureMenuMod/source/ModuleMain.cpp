@@ -35,94 +35,61 @@ int sprHudOptionButton = -1;
 int jpFont = -1;
 int rmCharSelect = -1;
 
-EXPORTED AurieStatus ModulePreinitialize(
-	IN AurieModule* Module,
-	IN const fs::path& ModulePath
-)
+AurieStatus moduleInitStatus = AURIE_MODULE_INITIALIZATION_FAILED;
+
+void initHooks()
 {
-	modMenuGridNames.push_back("Play");
-	modMenuGridList.push_back(std::shared_ptr<menuGridData>(nullptr));
-	ObCreateInterface(Module, &holoCureMenuInterface, "HoloCureMenuInterface");
-	return AURIE_SUCCESS;
-}
-
-EXPORTED AurieStatus ModuleInitialize(
-	IN AurieModule* Module,
-	IN const fs::path& ModulePath
-)
-{
-	AurieStatus status = AURIE_SUCCESS;
-	status = ObGetInterface("callbackManager", (AurieInterfaceBase*&)callbackManagerInterfacePtr);
-	if (!AurieSuccess(status))
-	{
-		printf("Failed to get callback manager interface. Make sure that CallbackManagerMod is located in the mods/Aurie directory.\n");
-		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
-	}
-	// Gets a handle to the interface exposed by YYTK
-	// You can keep this pointer for future use, as it will not change unless YYTK is unloaded.
-	status = ObGetInterface(
-		"YYTK_Main",
-		(AurieInterfaceBase*&)(g_ModuleInterface)
-	);
-
-	// If we can't get the interface, we fail loading.
-	if (!AurieSuccess(status))
-	{
-		printf("Failed to get YYTK Interface\n");
-		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
-	}
-
 	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterBuiltinFunctionCallback(MODNAME, "struct_get_from_hash", nullptr, nullptr, &origStructGetFromHashFunc)))
 	{
-		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "struct_get_from_hash");
-		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
+		DbgPrintEx(LOG_SEVERITY_ERROR, "Failed to register callback for %s", "struct_get_from_hash");
+		return;
 	}
 	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterBuiltinFunctionCallback(MODNAME, "struct_set_from_hash", nullptr, nullptr, &origStructSetFromHashFunc)))
 	{
-		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "struct_set_from_hash");
-		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
+		DbgPrintEx(LOG_SEVERITY_ERROR, "Failed to register callback for %s", "struct_set_from_hash");
+		return;
 	}
 	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterBuiltinFunctionCallback(MODNAME, "draw_text", DrawTextBefore, nullptr, nullptr)))
 	{
-		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "draw_text");
-		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
+		DbgPrintEx(LOG_SEVERITY_ERROR, "Failed to register callback for %s", "draw_text");
+		return;
 	}
 	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterBuiltinFunctionCallback(MODNAME, "show_debug_message", ShowDebugMessageBefore, nullptr, nullptr)))
 	{
-		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "show_debug_message");
-		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
+		DbgPrintEx(LOG_SEVERITY_ERROR, "Failed to register callback for %s", "show_debug_message");
+		return;
 	}
 
 	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterCodeEventCallback(MODNAME, "gml_Object_obj_InputManager_Step_0", InputManagerStepAfter, nullptr)))
 	{
-		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "gml_Object_obj_InputManager_Step_0");
-		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
+		DbgPrintEx(LOG_SEVERITY_ERROR, "Failed to register callback for %s", "gml_Object_obj_InputManager_Step_0");
+		return;
 	}
 	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterCodeEventCallback(MODNAME, "gml_Object_obj_TitleScreen_Draw_0", TitleScreenDrawBefore, nullptr)))
 	{
-		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "gml_Object_obj_TitleScreen_Draw_0");
-		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
+		DbgPrintEx(LOG_SEVERITY_ERROR, "Failed to register callback for %s", "gml_Object_obj_TitleScreen_Draw_0");
+		return;
 	}
 	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterCodeEventCallback(MODNAME, "gml_Object_obj_TitleCharacter_Draw_0", TitleCharacterDrawBefore, nullptr)))
 	{
-		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "gml_Object_obj_TitleCharacter_Draw_0");
-		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
+		DbgPrintEx(LOG_SEVERITY_ERROR, "Failed to register callback for %s", "gml_Object_obj_TitleCharacter_Draw_0");
+		return;
 	}
 	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterCodeEventCallback(MODNAME, "gml_Object_obj_TextController_Create_0", nullptr, TextControllerCreateAfter)))
 	{
-		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "gml_Object_obj_TextController_Create_0");
-		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
+		DbgPrintEx(LOG_SEVERITY_ERROR, "Failed to register callback for %s", "gml_Object_obj_TextController_Create_0");
+		return;
 	}
 
 	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterScriptFunctionCallback(MODNAME, "gml_Script_Confirmed@gml_Object_obj_TitleScreen_Create_0", ConfirmedTitleScreenBefore, nullptr, nullptr)))
 	{
-		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "gml_Script_Confirmed@gml_Object_obj_TitleScreen_Create_0");
-		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
+		DbgPrintEx(LOG_SEVERITY_ERROR, "Failed to register callback for %s", "gml_Script_Confirmed@gml_Object_obj_TitleScreen_Create_0");
+		return;
 	}
 	if (!AurieSuccess(callbackManagerInterfacePtr->RegisterScriptFunctionCallback(MODNAME, "gml_Script_draw_text_outline", nullptr, nullptr, &origDrawTextOutlineScript)))
 	{
-		g_ModuleInterface->Print(CM_RED, "Failed to register callback for %s", "gml_Script_draw_text_outline");
-		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
+		DbgPrintEx(LOG_SEVERITY_ERROR, "Failed to register callback for %s", "gml_Script_draw_text_outline");
+		return;
 	}
 
 	g_RunnerInterface = g_ModuleInterface->GetRunnerInterface();
@@ -136,16 +103,70 @@ EXPORTED AurieStatus ModuleInitialize(
 	jpFont = static_cast<int>(g_ModuleInterface->CallBuiltin("asset_get_index", { "jpFont" }).ToDouble());
 	rmCharSelect = static_cast<int>(g_ModuleInterface->CallBuiltin("asset_get_index", { "rm_CharSelect" }).ToDouble());
 
+	AurieStatus status = AURIE_SUCCESS;
+
 	for (int i = 0; i < std::extent<decltype(VariableNamesStringsArr)>::value; i++)
 	{
 		if (!AurieSuccess(status))
 		{
-			g_ModuleInterface->Print(CM_RED, "Failed to get hash for %s", VariableNamesStringsArr[i]);
+			DbgPrintEx(LOG_SEVERITY_ERROR, "Failed to get hash for %s", VariableNamesStringsArr[i]);
 		}
 		GMLVarIndexMapGMLHash[i] = std::move(g_ModuleInterface->CallBuiltin("variable_get_hash", { VariableNamesStringsArr[i] }));
 	}
 
 	callbackManagerInterfacePtr->LogToFile(MODNAME, "Finished initializing");
 
+	moduleInitStatus = AURIE_SUCCESS;
+}
+
+void runnerInitCallback(FunctionWrapper<void(int)>& dummyWrapper)
+{
+	AurieStatus status = AURIE_SUCCESS;
+	status = ObGetInterface("callbackManager", (AurieInterfaceBase*&)callbackManagerInterfacePtr);
+	if (!AurieSuccess(status))
+	{
+		printf("Failed to get callback manager interface. Make sure that CallbackManagerMod is located in the mods/Aurie directory.\n");
+		return;
+	}
+
+	callbackManagerInterfacePtr->RegisterInitFunction(initHooks);
+}
+
+EXPORTED AurieStatus ModulePreinitialize(
+	IN AurieModule* Module,
+	IN const fs::path& ModulePath
+)
+{
+	UNREFERENCED_PARAMETER(ModulePath);
+
+	modMenuGridNames.push_back("Play");
+	modMenuGridList.push_back(std::shared_ptr<menuGridData>(nullptr));
+	ObCreateInterface(Module, &holoCureMenuInterface, "HoloCureMenuInterface");
+
+	// Gets a handle to the interface exposed by YYTK
+	// You can keep this pointer for future use, as it will not change unless YYTK is unloaded.
+	g_ModuleInterface = GetInterface();
+
+	// If we can't get the interface, we fail loading.
+	if (g_ModuleInterface == nullptr)
+	{
+		DbgPrintEx(LOG_SEVERITY_CRITICAL, "Failed to get YYTK interface");
+		return AURIE_MODULE_DEPENDENCY_NOT_RESOLVED;
+	}
+
+	g_ModuleInterface->CreateCallback(
+		Module,
+		EVENT_RUNNER_INIT,
+		runnerInitCallback,
+		0
+	);
 	return AURIE_SUCCESS;
+}
+
+EXPORTED AurieStatus ModuleInitialize(
+	IN AurieModule* Module,
+	IN const fs::path& ModulePath
+)
+{
+	return moduleInitStatus;
 }

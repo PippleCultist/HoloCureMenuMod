@@ -346,7 +346,7 @@ void menuGridData::processInput(bool isMouseLeftPressed, bool isMouseRightPresse
 				if (curMenuColumnPtr->curSelectedIndex == -1)
 				{
 					callbackManagerInterfacePtr->LogToFile(MODNAME, "Menu index is set to -1");
-					g_ModuleInterface->Print(CM_RED, "Menu index is set to -1");
+					DbgPrintEx(LOG_SEVERITY_ERROR, "Menu index is set to -1");
 					return;
 				}
 				if (!curColumnListPtr->menuDataPtrList[curMenuColumnPtr->curSelectedIndex]->isVisible)
@@ -355,7 +355,7 @@ void menuGridData::processInput(bool isMouseLeftPressed, bool isMouseRightPresse
 					if (curMenuColumnPtr->curSelectedIndex == -1)
 					{
 						callbackManagerInterfacePtr->LogToFile(MODNAME, "Menu index not found");
-						g_ModuleInterface->Print(CM_RED, "Menu index not found");
+						DbgPrintEx(LOG_SEVERITY_ERROR, "Menu index not found");
 						return;
 					}
 				}
@@ -392,7 +392,7 @@ void menuGridData::processInput(bool isMouseLeftPressed, bool isMouseRightPresse
 				if (curMenuColumnPtr->curSelectedIndex == -1)
 				{
 					callbackManagerInterfacePtr->LogToFile(MODNAME, "Menu index is set to -1");
-					g_ModuleInterface->Print(CM_RED, "Menu index is set to -1");
+					DbgPrintEx(LOG_SEVERITY_ERROR, "Menu index is set to -1");
 					return;
 				}
 				if (!curColumnListPtr->menuDataPtrList[curMenuColumnPtr->curSelectedIndex]->isVisible)
@@ -401,7 +401,7 @@ void menuGridData::processInput(bool isMouseLeftPressed, bool isMouseRightPresse
 					if (curMenuColumnPtr->curSelectedIndex == -1)
 					{
 						callbackManagerInterfacePtr->LogToFile(MODNAME, "Menu index not found");
-						g_ModuleInterface->Print(CM_RED, "Menu index not found");
+						DbgPrintEx(LOG_SEVERITY_ERROR, "Menu index not found");
 						return;
 					}
 				}
