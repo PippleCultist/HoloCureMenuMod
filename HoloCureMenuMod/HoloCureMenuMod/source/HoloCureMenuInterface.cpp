@@ -19,8 +19,8 @@ extern std::vector<std::shared_ptr<menuGridData>> modMenuGridList;
 extern std::string curMenuID;
 extern CallbackManagerInterface* callbackManagerInterfacePtr;
 
-int prevActionOneKey = -1;
-int prevActionTwoKey = -1;
+int prevActionOneKey = 0;
+int prevActionTwoKey = 0;
 
 AurieStatus HoloCureMenuInterface::Create()
 {
@@ -155,14 +155,14 @@ AurieStatus HoloCureMenuInterface::DisableActionButtons(
 	IN const std::string& ModName
 )
 {
-	if (prevActionOneKey == -1)
+	if (prevActionOneKey == 0)
 	{
 		RValue& actionOneKey = g_ModuleInterface->CallBuiltin("variable_global_get", { "theButtons" })[0];
-		prevActionOneKey = static_cast<int>(lround(actionOneKey.ToDouble()));
-		actionOneKey = -1;
+		prevActionOneKey = actionOneKey.ToInt32();
+		actionOneKey = 0;
 		RValue& actionTwoKey = g_ModuleInterface->CallBuiltin("variable_global_get", { "theButtons" })[1];
-		prevActionTwoKey = static_cast<int>(lround(actionTwoKey.ToDouble()));
-		actionTwoKey = -1;
+		prevActionTwoKey = actionTwoKey.ToInt32();
+		actionTwoKey = 0;
 		RValue setKeyboardControlsMethod = g_ModuleInterface->CallBuiltin("variable_global_get", { "SetKeyboardControls" });
 		RValue setKeyboardControlsArray = g_ModuleInterface->CallBuiltin("array_create", { 0 });
 		g_ModuleInterface->CallBuiltin("method_call", { setKeyboardControlsMethod, setKeyboardControlsArray });
@@ -174,12 +174,12 @@ AurieStatus HoloCureMenuInterface::EnableActionButtons(
 	IN const std::string& ModName
 )
 {
-	if (prevActionOneKey != -1)
+	if (prevActionOneKey != 0)
 	{
 		g_ModuleInterface->CallBuiltin("variable_global_get", { "theButtons" })[0] = static_cast<double>(prevActionOneKey);
-		prevActionOneKey = -1;
+		prevActionOneKey = 0;
 		g_ModuleInterface->CallBuiltin("variable_global_get", { "theButtons" })[1] = static_cast<double>(prevActionTwoKey);
-		prevActionTwoKey = -1;
+		prevActionTwoKey = 0;
 		RValue setKeyboardControlsMethod = g_ModuleInterface->CallBuiltin("variable_global_get", { "SetKeyboardControls" });
 		RValue setKeyboardControlsArray = g_ModuleInterface->CallBuiltin("array_create", { 0 });
 		g_ModuleInterface->CallBuiltin("method_call", { setKeyboardControlsMethod, setKeyboardControlsArray });
